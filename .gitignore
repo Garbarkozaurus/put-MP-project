@@ -1,0 +1,9 @@
+# dataset
+/ModelNet40/
+
+# vitual environment for the project
+/MP-project-venv/
+# script used to make running python from the virtual environment easier
+py_alias.sh
+
+*.zip
