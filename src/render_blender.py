@@ -44,9 +44,9 @@ scene = bpy.context.scene
 render = bpy.context.scene.render
 
 render.engine = args.engine
-render.image_settings.color_mode = 'RGBA' # ('RGB', 'RGBA', ...)
-render.image_settings.color_depth = args.color_depth # ('8', '16')
-render.image_settings.file_format = args.format # ('PNG', 'OPEN_EXR', 'JPEG, ...)
+render.image_settings.color_mode = 'RGBA'  # ('RGB', 'RGBA', ...)
+render.image_settings.color_depth = args.color_depth  # ('8', '16')
+render.image_settings.file_format = args.format  # ('PNG', 'OPEN_EXR', 'JPEG, ...)
 render.resolution_x = args.resolution
 render.resolution_y = args.resolution
 render.resolution_percentage = 100
@@ -91,59 +91,65 @@ else:
     links.new(map.outputs[0], depth_file_output.inputs[0])
 
 # Create normal output nodes
-scale_node = nodes.new(type="CompositorNodeMixRGB")
-scale_node.blend_type = 'MULTIPLY'
-# scale_node.use_alpha = True
-scale_node.inputs[2].default_value = (0.5, 0.5, 0.5, 1)
-links.new(render_layers.outputs['Normal'], scale_node.inputs[1])
+# I have no idea what this renders
+# scale_node = nodes.new(type="CompositorNodeMixRGB")
+# scale_node.blend_type = 'MULTIPLY'
+# # scale_node.use_alpha = True
+# scale_node.inputs[2].default_value = (0.5, 0.5, 0.5, 1)
+# links.new(render_layers.outputs['Normal'], scale_node.inputs[1])
 
-bias_node = nodes.new(type="CompositorNodeMixRGB")
-bias_node.blend_type = 'ADD'
-# bias_node.use_alpha = True
-bias_node.inputs[2].default_value = (0.5, 0.5, 0.5, 0)
-links.new(scale_node.outputs[0], bias_node.inputs[1])
+# bias_node = nodes.new(type="CompositorNodeMixRGB")
+# bias_node.blend_type = 'ADD'
+# # bias_node.use_alpha = True
+# bias_node.inputs[2].default_value = (0.5, 0.5, 0.5, 0)
+# links.new(scale_node.outputs[0], bias_node.inputs[1])
 
-normal_file_output = nodes.new(type="CompositorNodeOutputFile")
-normal_file_output.label = 'Normal Output'
-normal_file_output.base_path = ''
-normal_file_output.file_slots[0].use_node_format = True
-normal_file_output.format.file_format = args.format
-links.new(bias_node.outputs[0], normal_file_output.inputs[0])
+# normal_file_output = nodes.new(type="CompositorNodeOutputFile")
+# normal_file_output.label = 'Normal Output'
+# normal_file_output.base_path = ''
+# normal_file_output.file_slots[0].use_node_format = True
+# normal_file_output.format.file_format = args.format
+# links.new(bias_node.outputs[0], normal_file_output.inputs[0])
 
 # Create albedo output nodes
-alpha_albedo = nodes.new(type="CompositorNodeSetAlpha")
-links.new(render_layers.outputs['DiffCol'], alpha_albedo.inputs['Image'])
-links.new(render_layers.outputs['Alpha'], alpha_albedo.inputs['Alpha'])
+# Albedo is the fraction of sunlight that is diffusely reflected by a body
+# https://en.wikipedia.org/wiki/Albedo
+# alpha_albedo = nodes.new(type="CompositorNodeSetAlpha")
+# links.new(render_layers.outputs['DiffCol'], alpha_albedo.inputs['Image'])
+# links.new(render_layers.outputs['Alpha'], alpha_albedo.inputs['Alpha'])
 
-albedo_file_output = nodes.new(type="CompositorNodeOutputFile")
-albedo_file_output.label = 'Albedo Output'
-albedo_file_output.base_path = ''
-albedo_file_output.file_slots[0].use_node_format = True
-albedo_file_output.format.file_format = args.format
-albedo_file_output.format.color_mode = 'RGBA'
-albedo_file_output.format.color_depth = args.color_depth
-links.new(alpha_albedo.outputs['Image'], albedo_file_output.inputs[0])
+# albedo_file_output = nodes.new(type="CompositorNodeOutputFile")
+# albedo_file_output.label = 'Albedo Output'
+# albedo_file_output.base_path = ''
+# albedo_file_output.file_slots[0].use_node_format = True
+# albedo_file_output.format.file_format = args.format
+# albedo_file_output.format.color_mode = 'RGBA'
+# albedo_file_output.format.color_depth = args.color_depth
+# links.new(alpha_albedo.outputs['Image'], albedo_file_output.inputs[0])
 
 # Create id map output nodes
-id_file_output = nodes.new(type="CompositorNodeOutputFile")
-id_file_output.label = 'ID Output'
-id_file_output.base_path = ''
-id_file_output.file_slots[0].use_node_format = True
-id_file_output.format.file_format = args.format
-id_file_output.format.color_depth = args.color_depth
+# id map colors every category of model elements based on some criterion
+# (texture, material, etc.). I am not sure what is used here (maybe the face?)
 
-if args.format == 'OPEN_EXR':
-    links.new(render_layers.outputs['IndexOB'], id_file_output.inputs[0])
-else:
-    id_file_output.format.color_mode = 'BW'
+# id_file_output = nodes.new(type="CompositorNodeOutputFile")
+# id_file_output.label = 'ID Output'
+# id_file_output.base_path = ''
+# id_file_output.file_slots[0].use_node_format = True
+# id_file_output.format.file_format = args.format
+# id_file_output.format.color_depth = args.color_depth
 
-    divide_node = nodes.new(type='CompositorNodeMath')
-    divide_node.operation = 'DIVIDE'
-    divide_node.use_clamp = False
-    divide_node.inputs[1].default_value = 2**int(args.color_depth)
+# if args.format == 'OPEN_EXR':
+#     links.new(render_layers.outputs['IndexOB'], id_file_output.inputs[0])
+# else:
+#     id_file_output.format.color_mode = 'BW'
 
-    links.new(render_layers.outputs['IndexOB'], divide_node.inputs[0])
-    links.new(divide_node.outputs[0], id_file_output.inputs[0])
+#     divide_node = nodes.new(type='CompositorNodeMath')
+#     divide_node.operation = 'DIVIDE'
+#     divide_node.use_clamp = False
+#     divide_node.inputs[1].default_value = 2**int(args.color_depth)
+
+#     links.new(render_layers.outputs['IndexOB'], divide_node.inputs[0])
+#     links.new(divide_node.outputs[0], id_file_output.inputs[0])
 
 # Delete default cube
 context.active_object.select_set(True)
@@ -164,7 +170,7 @@ for slot in obj.material_slots:
     node.inputs['Specular'].default_value = 0.05
 
 if args.scale != 1:
-    bpy.ops.transform.resize(value=(args.scale,args.scale,args.scale))
+    bpy.ops.transform.resize(value=(args.scale, args.scale, args.scale))
     bpy.ops.object.transform_apply(scale=True)
 if args.remove_doubles:
     bpy.ops.object.mode_set(mode='EDIT')
@@ -216,8 +222,13 @@ cam_constraint.target = cam_empty
 stepsize = 360.0 / args.views
 rotation_mode = 'XYZ'
 
-model_identifier = os.path.split(os.path.split(args.obj)[0])[1]
-fp = os.path.join(os.path.abspath(args.output_folder), model_identifier, model_identifier)
+# for some reason, this would double the final directory
+# I hope that the new workaround doesn't cause any issues
+# model_identifier = os.path.split(os.path.split(args.obj)[0])[-1]
+# fp = os.path.join(os.path.abspath(args.output_folder), model_identifier, model_identifier)
+model_identifier = os.path.basename(args.obj).split(".")[0]
+fp = os.path.join(os.path.abspath(args.output_folder), model_identifier)
+
 
 for i in range(0, args.views):
     print("Rotation {}, {}".format((stepsize * i), math.radians(stepsize * i)))
@@ -226,13 +237,13 @@ for i in range(0, args.views):
 
     scene.render.filepath = render_file_path
     depth_file_output.file_slots[0].path = render_file_path + "_depth"
-    normal_file_output.file_slots[0].path = render_file_path + "_normal"
-    albedo_file_output.file_slots[0].path = render_file_path + "_albedo"
-    id_file_output.file_slots[0].path = render_file_path + "_id"
+    # normal_file_output.file_slots[0].path = render_file_path + "_normal"
+    # albedo_file_output.file_slots[0].path = render_file_path + "_albedo"
+    # id_file_output.file_slots[0].path = render_file_path + "_id"
 
     bpy.ops.render.render(write_still=True)  # render still
 
     cam_empty.rotation_euler[2] += math.radians(stepsize)
 
 # For debugging the workflow
-#bpy.ops.wm.save_as_mainfile(filepath='debug.blend')
+# bpy.ops.wm.save_as_mainfile(filepath='debug.blend')
