@@ -1,5 +1,7 @@
 # dataset
 /ModelNet40/
+# RGBD dataset
+/RGBD_ModelNet40/
 
 # vitual environment for the project
 /MP-project-venv/
@@ -7,3 +9,4 @@
 py_alias.sh
 
 *.zip
+*.png
