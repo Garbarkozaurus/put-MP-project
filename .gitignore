@@ -1,3 +1,5 @@
+src/__pycache__/
+
 # dataset
 /ModelNet40/
 # RGBD dataset
