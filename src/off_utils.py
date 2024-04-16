@@ -1,6 +1,9 @@
 import numpy as np
 import itertools
 import subprocess
+import pathlib
+import os
+import datetime
 
 import data_loading
 
@@ -72,5 +75,30 @@ def create_and_render_cube(
     print(scale)
 
 
+def render_offs_from_pattern(
+        glob_pattern: str,
+        dataset_root: str = "ModelNet40",
+        dest_dir: str = "RGBD_ModelNet40") -> None:
+    path_obj = pathlib.Path(dataset_root).glob(glob_pattern)
+    out_log = open("/dev/null", "w")
+    for i, filename in enumerate(path_obj):
+        out_dir = str(os.path.dirname(filename)).lstrip(dataset_root)
+        out_dir = f"{dest_dir}{out_dir}/"
+        # skip if the corresponding png already exsists
+        first_out_file = os.path.basename(filename).split('.')[0]
+        if os.path.isfile(f"{out_dir}{first_out_file}_r_000.png"):
+            print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] SKIP {filename}: {i+1}")
+            continue
+        scale = scale_from_off(str(filename))
+        arguments = ["blender", "--background", "--python", "./src/render_blender.py", "--",
+                f"{filename}", "--output_folder", f"{out_dir}",
+                "--scale", f"{scale}"]
+        subprocess.run(arguments, stdout=out_log)
+        # there are 12311 files in the main dataset
+        print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {filename}: {i+1}")
+    out_log.close()
+
+
 if __name__ == "__main__":
-    create_and_render_cube(side_len=1.0)
+    # create_and_render_cube(side_len=1.0)
+    render_offs_from_pattern("*/*/*.off")
