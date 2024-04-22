@@ -54,8 +54,8 @@ def scale_from_coords(vertex_coords: np.ndarray[np.float32]) -> float:
 
 
 def scale_from_off(off_path: str) -> float:
-    # discard the array containing faces
-    vertex_coords, _ = data_loading.load_off_file_np(off_path)
+    # discard the tuple with model stats and the array containing faces
+    _, vertex_coords, _ = data_loading.load_off_file_np(off_path)
     return scale_from_coords(vertex_coords)
 
 
