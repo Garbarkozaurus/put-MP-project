@@ -30,7 +30,7 @@ parser.add_argument('--color_depth', type=str, default='8',
                     help='Number of bit per channel used for output. Either 8 or 16.')
 parser.add_argument('--format', type=str, default='PNG',
                     help='Format of files generated. Either PNG or OPEN_EXR')
-parser.add_argument('--resolution', type=int, default=600,
+parser.add_argument('--resolution', type=int, default=256,
                     help='Resolution of the images.')
 parser.add_argument('--engine', type=str, default='BLENDER_EEVEE',
                     help='Blender internal engine for rendering. E.g. CYCLES, BLENDER_EEVEE, ...')
