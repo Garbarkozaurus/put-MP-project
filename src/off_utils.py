@@ -140,7 +140,7 @@ def render_off_dataset_set_numbers(
         class_name = os.path.basename(class_dir)
         train_files = sorted(list(pathlib.Path(f"{class_dir}/train").iterdir()))
         out_dir_train = f"{dest_dir}/{class_name}/train/"
-        for train_off_file in train_files[:n_train]:
+        for i, train_off_file in enumerate(train_files[:n_train]):
             out_file_name = os.path.basename(train_off_file).split('.')[0]
             if os.path.isfile(f"{out_dir_train}{out_file_name}_r_000.png"):
                 print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] SKIP train/{out_file_name}")
@@ -150,9 +150,10 @@ def render_off_dataset_set_numbers(
                 f"{train_off_file}", "--output_folder", f"{out_dir_train}",
                 "--scale", f"{scale}"]
             subprocess.run(arguments, stdout=out_log)
+            print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {train_off_file}: {i+1}\r")
         out_dir_test = f"{dest_dir}/{class_name}/test/"
         test_files = sorted(list(pathlib.Path(f"{class_dir}/test").iterdir()))
-        for test_off_file in test_files[:n_test]:
+        for i, test_off_file in enumerate(test_files[:n_test]):
             out_file_name = os.path.basename(test_off_file).split('.')[0]
             if os.path.isfile(f"{out_dir_test}{out_file_name}_r_000.png"):
                 print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] SKIP test/{out_file_name}")
@@ -162,6 +163,7 @@ def render_off_dataset_set_numbers(
                 f"{test_off_file}", "--output_folder", f"{out_dir_test}",
                 "--scale", f"{scale}"]
             subprocess.run(arguments, stdout=out_log)
+            print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {test_off_file}: {i+1}\r")
 
 
 if __name__ == "__main__":
