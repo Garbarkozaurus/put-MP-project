@@ -1,9 +1,9 @@
 src/__pycache__/
 
 # dataset
-/ModelNet40/
+/ModelNet40*/
 # RGBD dataset
-/RGBD_ModelNet40/
+/RGBD_ModelNet40*/
 
 # vitual environment for the project
 /MP-project-venv/
