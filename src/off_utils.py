@@ -150,7 +150,7 @@ def render_off_dataset_set_numbers(
                 f"{train_off_file}", "--output_folder", f"{out_dir_train}",
                 "--scale", f"{scale}"]
             subprocess.run(arguments, stdout=out_log)
-            print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {train_off_file}: {i+1}\r")
+            print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {train_off_file}: {i+1}")
         out_dir_test = f"{dest_dir}/{class_name}/test/"
         test_files = sorted(list(pathlib.Path(f"{class_dir}/test").iterdir()))
         for i, test_off_file in enumerate(test_files[:n_test]):
@@ -163,7 +163,7 @@ def render_off_dataset_set_numbers(
                 f"{test_off_file}", "--output_folder", f"{out_dir_test}",
                 "--scale", f"{scale}"]
             subprocess.run(arguments, stdout=out_log)
-            print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {test_off_file}: {i+1}\r")
+            print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {test_off_file}: {i+1}")
 
 
 if __name__ == "__main__":

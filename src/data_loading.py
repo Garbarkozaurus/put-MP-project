@@ -27,7 +27,7 @@ def export_off_file_np(
         vertices: np.ndarray[np.float32],
         faces: np.ndarray[np.int32],
         file_path: str) -> None:
-    fp = open(file_path, "w")
+    fp = open(file_path, "w+")
     fp.write("OFF\n")
     fp.write(" ".join(map(str, model_params))+"\n")
     for vertex in vertices:
