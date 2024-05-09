@@ -4,7 +4,8 @@ import torch.optim as optim
 import torchinfo
 
 
-from fbf_shape_reconstruction_dataset import FBFShapeReconstructionDataset
+from shape_reconstruction_dataset import ShapeReconstructionDataset
+# from fbf_shape_reconstruction_dataset import FBFShapeReconstructionDataset
 
 
 _config = {
@@ -62,7 +63,7 @@ def train(
     The training dataset is formed by concatenating files on the `train_files`
     list.
     """
-    train_dataset = FBFShapeReconstructionDataset(inputs_root_dir, outputs_root_dir, "train")
+    train_dataset = ShapeReconstructionDataset(inputs_root_dir, outputs_root_dir, "train")
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=_config["batch_size"],
                                                shuffle=True, num_workers=2)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
