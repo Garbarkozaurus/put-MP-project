@@ -1,14 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-from typing import Optional
 import torchinfo
 
-from voxelization import load_ones_indices_into_binary_grid
-from photo_utils import load_rgbd_image
 
-from shape_reconstruction_dataset import ShapeReconstructionDataset
+from fbf_shape_reconstruction_dataset import FBFShapeReconstructionDataset
+
 
 _config = {
     "batch_size": 8,
@@ -28,21 +25,22 @@ def vprint(*args, **kwargs) -> None:
 
 
 class CnnBasic(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super().__init__()
+        self.device = device
         self.convolutional_block = nn.Sequential(
-            nn.Conv3d(30, 30, kernel_size=3, padding=1),
+            nn.Conv3d(30, 30, kernel_size=3, padding=1).to(device),
             nn.ReLU(),
             # setting stride like this makes the network reduce the size
             # of "each image" in half, but preserve all channels
-            nn.Conv3d(30, 32, kernel_size=3, padding=1, stride=(2, 2, 1)),
+            nn.Conv3d(30, 32, kernel_size=3, padding=1, stride=(2, 2, 1)).to(device),
             nn.ReLU(),
-            nn.Conv3d(32, 64, kernel_size=3, padding=1, stride=(2, 2, 1)),
+            nn.Conv3d(32, 64, kernel_size=3, padding=1, stride=(2, 2, 1)).to(device),
             nn.ReLU(),
             # reduce the 4 channels to 1 with the next two layers
-            nn.Conv3d(64, 64, kernel_size=3, padding=1, stride=(1, 1, 2)),
+            nn.Conv3d(64, 64, kernel_size=3, padding=1, stride=(1, 1, 2)).to(device),
             nn.ReLU(),
-            nn.Conv3d(64, 64, kernel_size=3, padding=1, stride=(1, 1, 2)),
+            nn.Conv3d(64, 64, kernel_size=3, padding=1, stride=(1, 1, 2)).to(device),
             nn.ReLU(),
         )
         self.out_activation = nn.Sequential(
@@ -64,11 +62,11 @@ def train(
     The training dataset is formed by concatenating files on the `train_files`
     list.
     """
-    train_dataset = ShapeReconstructionDataset(inputs_root_dir, outputs_root_dir, "train")
+    train_dataset = FBFShapeReconstructionDataset(inputs_root_dir, outputs_root_dir, "train")
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=_config["batch_size"],
                                                shuffle=True, num_workers=2)
-
-    cnn = CnnBasic()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    cnn = CnnBasic(device)
     vprint(cnn)
 
     loss_fn = nn.L1Loss()
@@ -89,6 +87,8 @@ def train(
         epoch_loss = 0
         for i, data in enumerate(train_loader):
             inputs, targets = data
+            inputs = inputs.to(device)
+            targets = targets.to(device)
             optimizer.zero_grad()
             output = cnn(inputs)[:, :, :, :, 0]
             loss = loss_fn(output, targets)
