@@ -14,7 +14,8 @@ class ShapeReconstructionDataset(Dataset):
             outputs_root_dir: str = "ModelNet40_ones",
             mode: Literal["train"] | Literal["test"] = "train") -> None:
         outputs_dir = pathlib.Path(outputs_root_dir)
-        self.data = []
+        self.images = []
+        self.voxels = []
         for i, class_dir in enumerate(outputs_dir.iterdir()):
             class_name = os.path.basename(class_dir)
             print(f"{i:2}. {class_name}")
@@ -24,18 +25,25 @@ class ShapeReconstructionDataset(Dataset):
                 # find all pictures associated with the voxel
                 file_basename = os.path.basename(output_file).rstrip('.txt')
                 input_file_list = inputs_dir.glob(f"{file_basename}_r_[0-9][0-9][0-9].png")
-                rgbd_images = torch.tensor(np.array([load_rgbd_image(str(f)) for f in input_file_list]), dtype=torch.uint8)
+                # [:, :, -2] takes only b and d channels
+                rgbd_images = torch.tensor(np.array([load_rgbd_image(str(f))[:, :, :-2] for f in input_file_list]), dtype=torch.uint8)
                 binary_grid = torch.tensor(load_ones_indices_into_binary_grid(output_file), dtype=torch.float16)
-                self.data.append((rgbd_images, binary_grid))
+                # self.data.append((rgbd_images, binary_grid))
+                if rgbd_images.shape != (30, 256, 256, 2):
+                    print(rgbd_images.shape, output_file)
+                self.images.append(rgbd_images)
+                self.voxels.append(binary_grid)
+        self.images = np.array(self.images, dtype=np.uint8)
+        self.voxels = np.array(self.voxels, dtype=np.uint8)
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.data[index]
+        return (self.images[index], self.voxels[index])
 
     def __len__(self) -> int:
-        return len(self.data)
+        return len(self.images)
 
 
 if __name__ == "__main__":
-    srd = ShapeReconstructionDataset(mode="test")
+    srd = ShapeReconstructionDataset(mode="train")
     print(srd[0])
     print(len(srd))
