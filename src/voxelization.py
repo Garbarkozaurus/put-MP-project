@@ -31,6 +31,9 @@ def voxelize(
     grid[indices[:,0], indices[:,1], indices[:,2]] = 1
     return grid
 
+def visualize_voxel_grid(voxel_grid: o3d.geometry.VoxelGrid) -> None:
+    o3d.visualization.draw_geometries(voxel_grid)
+
 
 def export_binary_voxel_grid(
         grid: np.ndarray[np.uint8],

@@ -17,6 +17,14 @@ def load_rgbd_image(rgb_png_image_path: str) -> np.ndarray[np.uint8]:
     rgb_im_arr[:, :, 3] = d_im_arr  # replace alpha channel with depth data
     return rgb_im_arr
 
+def load_d_image(rgb_png_image_path: str) -> np.ndarray[np.uint8]:
+    """Given a path to an rgb .png returns a corresponding depth
+    image as an np.ndarray
+    """
+    d_image_path = rgb_png_image_path.rstrip(".png")+"_depth0001.png"
+    d_im_arr = np.array(Image.open(d_image_path))
+    return d_im_arr
+
 
 if __name__ == "__main__":
     d_im_arr = np.array(Image.open(d_path))
