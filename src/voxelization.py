@@ -32,7 +32,7 @@ def voxelize(
     return grid
 
 def visualize_voxel_grid(voxel_grid: o3d.geometry.VoxelGrid) -> None:
-    o3d.visualization.draw_geometries(voxel_grid)
+    o3d.visualization.draw_geometries([voxel_grid])
 
 
 def export_binary_voxel_grid(

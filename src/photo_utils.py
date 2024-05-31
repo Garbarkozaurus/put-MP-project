@@ -22,7 +22,7 @@ def load_d_image(rgb_png_image_path: str) -> np.ndarray[np.uint8]:
     image as an np.ndarray
     """
     d_image_path = rgb_png_image_path.rstrip(".png")+"_depth0001.png"
-    d_im_arr = np.array(Image.open(d_image_path))
+    d_im_arr = np.array(Image.open(d_image_path)) / 255.0
     return d_im_arr
 
 
