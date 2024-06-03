@@ -28,7 +28,7 @@ class ShapeReconstructionDataset(Dataset):
                 file_basename = os.path.basename(output_file).rstrip('.txt')
                 input_file_list = inputs_dir.glob(f"{file_basename}_r_[0-9][0-9][0-9].txt")
                 input_voxels = torch.tensor(np.array([load_ones_indices_into_binary_grid(str(f)) for f in input_file_list][::every_n]), dtype=torch.float32)
-                output_voxels = torch.tensor(load_ones_indices_into_binary_grid(output_file), dtype=torch.float32)
+                output_voxels = torch.tensor(np.array(load_ones_indices_into_binary_grid(output_file)).reshape(1,64,64,64), dtype=torch.float32)
                 if input_voxels.shape != (np.ceil(30.0/every_n), 64, 64, 64):
                     print(input_voxels.shape, output_file)
                 self.inputs.append(input_voxels)
@@ -46,7 +46,7 @@ class ShapeReconstructionDataset(Dataset):
 
 
 if __name__ == "__main__":
-    srd = ShapeReconstructionDataset(mode="train", n_classes=2, skip_first_n=1, every_n=3)
+    srd = ShapeReconstructionDataset(mode="train", n_classes=1, skip_first_n=1, every_n=3)
     # print(srd[0])
     print(len(srd))
     print(srd[0][0].shape)
