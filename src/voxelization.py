@@ -4,6 +4,7 @@ import numpy as np
 import datetime
 import os
 import pathlib
+import torch
 
 
 def voxelize(
@@ -93,6 +94,14 @@ def create_voxel_from_binary_grid(
     return voxel_grid
 
 
+def voxel_from_predictions(
+        prediction_tensor: torch.tensor,
+        binarization_threshold: float = 0.5) -> o3d.geometry.VoxelGrid:
+    binary_inputs = torch.where(prediction_tensor >= binarization_threshold, 1, 0)
+    voxel = create_voxel_from_binary_grid(binary_inputs)
+    return voxel
+
+
 def create_voxelized_dataset_set_numbers(
         n_train: int = 64, n_test: int = 20, n_voxels: int = 64,
         dataset_root: str = "ModelNet40_centered",
@@ -137,6 +146,16 @@ if __name__ == "__main__":
     # print("Mean:", np.mean(grid))
     # EXPORT_PATH = "test_grid.txt"
     # export_binary_voxel_grid(grid, EXPORT_PATH)
+    # bench, chair, couch, table
+    INPUT_PATH = "ModelNet40_voxel_input/bench/test/bench_0174_r_120.txt"
+    OUTPUT_PATH = "ModelNet40_ones/bench/test/bench_0174.txt"
+    imported_in = load_ones_indices_into_binary_grid(INPUT_PATH)
+    imported_out = load_ones_indices_into_binary_grid(OUTPUT_PATH)
+    voxel_in = create_voxel_from_binary_grid(imported_in)
+    voxel_out = create_voxel_from_binary_grid(imported_out)
+    o3d.visualization.draw_geometries([voxel_out])
+    o3d.visualization.draw_geometries([voxel_in])
+
     # imported = load_ones_indices_into_binary_grid(EXPORT_PATH)
     # print("Shape:", imported.shape)
     # print("Max:", np.max(imported))
@@ -147,4 +166,4 @@ if __name__ == "__main__":
     # o3d.visualization.draw_geometries([voxel_grid])
     # voxel_grid = create_voxel_from_binary_grid(imported)
     # o3d.visualization.draw_geometries([voxel_grid])
-    create_voxelized_dataset_set_numbers()
+    # create_voxelized_dataset_set_numbers()
