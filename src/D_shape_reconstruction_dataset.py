@@ -6,10 +6,12 @@ import os
 from typing import Literal
 from voxelization import load_ones_indices_into_binary_grid
 
+
 class ShapeReconstructionDataset(Dataset):
     def __init__(
-            self, inputs_root_dir: str = ".\ModelNet40_voxel_input",
-            outputs_root_dir: str = ".\ModelNet40_ones",
+            self, inputs_root_dir: str = "./ModelNet40_voxel_input",
+            outputs_root_dir: str = "./ModelNet40_ones",
+            class_names: list[str] = [""],
             every_n: int = 1,
             n_classes: int = 40,
             skip_first_n: int = 0,
@@ -17,10 +19,14 @@ class ShapeReconstructionDataset(Dataset):
         outputs_dir = pathlib.Path(outputs_root_dir)
         self.inputs = []
         self.output = []
+        if len(class_names[0]) > 0:
+            assert n_classes-skip_first_n+1 >= len(class_names)
         for i, class_dir in enumerate(outputs_dir.iterdir()):
             if i < skip_first_n:
                 continue
             class_name = os.path.basename(class_dir)
+            if class_names[0] and class_name not in class_names:
+                continue
             print(f"{i:2}. {class_name}")
             output_file_list = sorted(list(pathlib.Path(f"{class_dir}/{mode}").iterdir()))
             inputs_dir = pathlib.Path(f"{inputs_root_dir}/{class_name}/{mode}")
