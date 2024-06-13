@@ -19,8 +19,8 @@ def voxelize(
     # fit to unit cube
     mesh.scale(1 / np.max(mesh.get_max_bound() - mesh.get_min_bound()),
                center=mesh.get_center())
-    if visualize:
-        o3d.visualization.draw_geometries([mesh])
+    # if visualize:
+    #     o3d.visualization.draw_geometries([mesh])
 
     voxel_grid = o3d.geometry.VoxelGrid.create_from_triangle_mesh(mesh, voxel_size=1.0/(n_voxels-1))
     if visualize:

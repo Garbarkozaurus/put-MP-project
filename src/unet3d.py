@@ -190,7 +190,7 @@ def train(
     The training dataset is formed by concatenating files on the `train_files`
     list.
     """
-    train_dataset = ShapeReconstructionDataset(inputs_root_dir, outputs_root_dir, skip_first_n=18, n_classes=1, every_n=1, mode="train")
+    train_dataset = ShapeReconstructionDataset(inputs_root_dir, outputs_root_dir, skip_first_n=3, n_classes=1, every_n=1, mode="train")
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=_config["batch_size"],
                                                shuffle=False, num_workers=2)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -237,7 +237,6 @@ def train(
                 print(f"Output min: {torch.min(output)}, Output mean: {torch.mean(output)} Output max: {torch.max(output)}")
                 print(f"Targets min: {torch.min(targets)}, Targets mean: {torch.mean(targets)} Targets max: {torch.max(targets)}")
                 break
-            # net_state = str(cnn.state_dict())
             loss.backward()
             epoch_loss += loss
             optimizer.step()
@@ -245,36 +244,52 @@ def train(
             torch.save(cnn.state_dict(), "saved_model.pt5")
         print(f"Finished epoch {epoch+1} with loss: {epoch_loss}")
     print("Finished training CnnBasic")
-    # torch.save(cnn.state_dict(), "saved_model.pt5")
     return cnn
 
 def test(
         cnn: UNet,
         inputs_root_dir: str = "ModelNet40_voxel_input",
         outputs_root_dir: str = "ModelNet40_ones") -> UNet:
-    test_dataset = ShapeReconstructionDataset(inputs_root_dir, outputs_root_dir, every_n=3, n_classes=10, mode="test")
+    test_dataset = ShapeReconstructionDataset(inputs_root_dir, outputs_root_dir, skip_first_n=3, n_classes=1, every_n=1, mode="test")
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=_config["batch_size"],
                                                shuffle=True, num_workers=2)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # loss_fn = nn.L1Loss()
-    loss_fn = nn.BCELoss()
-    # loss_fn = nn.BCEWithLogitsLoss()
+    
+    l1loss = nn.L1Loss()
+    bceloss = nn.BCELoss()
+    customloss = CustomLoss()
 
     cnn.eval()
-    test_loss = 0
+    test_loss_l1 = 0
+    test_loss_bce = 0
+    test_loss_custom = 0
     with torch.no_grad():
         for i, data in enumerate(test_loader):
             inputs, targets = data
             inputs = inputs.to(device)
             targets = targets.to(device)
             output = cnn(inputs)
-            loss = loss_fn(output, targets)
-            test_loss += loss
-    print(f"Finished testing with loss: {test_loss}")
+            loss = l1loss(output, targets)
+            test_loss_l1 += loss
+            loss = bceloss(output, targets)
+            test_loss_bce += loss
+            loss = customloss(output, targets)
+            test_loss_custom += loss
+        test_loss_l1 /= len(test_dataset)
+        test_loss_bce /= len(test_dataset)
+        test_loss_custom /= len(test_dataset)
+    print(f"=== Finished testing ===")
+    print(f"L1 Loss: {test_loss_l1}")
+    print(f"BCE Loss: {test_loss_bce}")
+    print(f"Custom Loss: {test_loss_custom}")
 
 
 
 if __name__ == "__main__":
     cnn = train()
     torch.save(cnn.state_dict(), "saved_model.pt5")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # cnn = UNet(device, 30)
+    # cnn.load_state_dict(torch.load("modelthatworkswell.pt5"))
+    # cnn.load_state_dict(torch.load("saved_model.pt5"))
     test(cnn)
