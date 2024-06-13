@@ -10,8 +10,8 @@ from custom_loss import CustomLoss
 
 _config = {
     "batch_size": 8,
-    "learning_rate": 0.0001,
-    "epochs": 50,
+    "learning_rate": 0.001,
+    "epochs": 100,
     "optimizer": "Adam",  # Name of optim class as string, e.g. "SGD" or "Adam"
     "momentum": 0.9,      # ignored if optimizer != "SGD"
 }
@@ -29,7 +29,8 @@ class UNet(nn.Module):
     def __init__(self, device, n_images=30):
         super().__init__()
         self.device = device
-        BASE = 4
+        BASE = 16
+        self.BASE = BASE
         # Input; 1x64x64x64 -> 4x64x64x64
         self.inconv = nn.Conv3d(n_images, BASE, kernel_size=3, padding=1, padding_mode='reflect').to(device)
 
@@ -60,8 +61,8 @@ class UNet(nn.Module):
         self.enc43 = nn.Conv3d(8*BASE, 8*BASE, kernel_size=3, padding=1, padding_mode='reflect').to(device)
         self.enc44 = nn.Conv3d(8*BASE, 8*BASE, kernel_size=3, padding=1, padding_mode='reflect').to(device)
 
-        self.fc1 = nn.Linear(8*BASE*8*8*8, 1000).to(device)
-        self.fc2 = nn.Linear(1000, 8*BASE*8*8*8).to(device)
+        self.fc1 = nn.Linear(8*BASE*8*8*8, 500).to(device)
+        self.fc2 = nn.Linear(500, 8*BASE*8*8*8).to(device)
 
         # Decoder; 32x8x8x8 -> 16x16x16x16
         self.upconv1 = nn.ConvTranspose3d(8*BASE, 4*BASE, kernel_size=2, stride=2).to(device)
@@ -89,7 +90,6 @@ class UNet(nn.Module):
         self.sigmoid = nn.Sigmoid().to(device)
 
     def forward(self, X):
-        BASE = 4
         # print(f"INPUT: X:{X.shape}, X.dtype:{X.dtype}")
         # Input
         xin = relu(self.inconv(X))
@@ -134,10 +134,10 @@ class UNet(nn.Module):
         xe44 = relu(xe44+res)
 
         # Fully connected
-        x = xe44.view(-1, 8*BASE*8*8*8)
+        x = xe44.view(-1, 8*self.BASE*8*8*8)
         x = relu(self.fc1(x))
         x = relu(self.fc2(x))
-        x = x.view(-1, 8*BASE, 8, 8, 8)
+        x = x.view(-1, 8*self.BASE, 8, 8, 8)
 
         # Decode
 
@@ -190,10 +190,11 @@ def train(
     The training dataset is formed by concatenating files on the `train_files`
     list.
     """
-    train_dataset = ShapeReconstructionDataset(inputs_root_dir, outputs_root_dir, every_n=3, n_classes=10, mode="train")
+    train_dataset = ShapeReconstructionDataset(inputs_root_dir, outputs_root_dir, skip_first_n=18, n_classes=1, every_n=1, mode="train")
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=_config["batch_size"],
                                                shuffle=False, num_workers=2)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # print(train_dataset.inputs.shape)
     cnn = UNet(device, train_dataset.inputs.shape[1])
     vprint(cnn)
 
@@ -216,7 +217,7 @@ def train(
     for epoch in range(_config["epochs"]):
         print(f"Starting epoch {epoch+1}/{_config['epochs']}")
         epoch_loss = 0
-        if epoch % 5 == 0 and epoch != 0:
+        if epoch % 20 == 0 and epoch != 0:
             # Halve learning rate every 5 epochs
             for param_group in optimizer.param_groups:
                 param_group["lr"] /= 2
@@ -231,12 +232,17 @@ def train(
                 print(f"Targets shape: {targets.shape}")
                 print(f"Output min: {torch.min(targets)}, Output mean: {torch.mean(targets)} Output max: {torch.max(targets)}")
             loss = loss_fn(output, targets)
-            torch.autograd.set_detect_anomaly(True)
-            net_state = str(cnn.state_dict())
+            if loss.isnan():
+                print(f"Loss is NaN at epoch {epoch+1}, batch {i+1}")
+                print(f"Output min: {torch.min(output)}, Output mean: {torch.mean(output)} Output max: {torch.max(output)}")
+                print(f"Targets min: {torch.min(targets)}, Targets mean: {torch.mean(targets)} Targets max: {torch.max(targets)}")
+                break
+            # net_state = str(cnn.state_dict())
             loss.backward()
             epoch_loss += loss
             optimizer.step()
-        torch.save(cnn.state_dict(), "saved_model.pt5")
+        if not loss.isnan():
+            torch.save(cnn.state_dict(), "saved_model.pt5")
         print(f"Finished epoch {epoch+1} with loss: {epoch_loss}")
     print("Finished training CnnBasic")
     # torch.save(cnn.state_dict(), "saved_model.pt5")

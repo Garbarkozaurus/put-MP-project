@@ -1,7 +1,7 @@
 import torch
 
 class CustomLoss(torch.nn.Module):
-    def __init__(self, alpha=0.85, epsilon=1e-12):
+    def __init__(self, alpha=0.97, epsilon=1e-12):
         super(CustomLoss, self).__init__()
         self.alpha = alpha
         self.epsilon = epsilon
